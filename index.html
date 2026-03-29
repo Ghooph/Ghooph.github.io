@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Мой первый сайт</title>
-    <!-- Иконка сайта (favicon) в виде буквы "М" – работает без внешних файлов -->
+    <title>Мой первый сайт | Гостевая книга</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%233b82f6' rx='20'/%3E%3Ctext x='50' y='68' font-size='60' text-anchor='middle' fill='white' font-weight='bold'%3EМ%3C/text%3E%3C/svg%3E">
     <style>
         * {
@@ -13,28 +12,40 @@
             box-sizing: border-box;
         }
 
-        /* Светлая тема (по умолчанию) с градиентным фоном */
+        /* АНИМИРОВАННЫЙ ГРАДИЕНТ (светлая тема) - более заметный */
         body {
             font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #f5f7fa 0%, #e0e7ff 100%);
+            background: linear-gradient(45deg, #f0f9ff, #e0f2fe, #bae6fd, #e0f2fe);
+            background-size: 300% 300%;
             color: #1e293b;
             line-height: 1.5;
             transition: background 0.3s, color 0.2s;
+            animation: gradientMove 6s ease infinite;
         }
 
-        /* Тёмная тема */
+        @keyframes gradientMove {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Тёмная тема с ярким переливающимся градиентом */
         body.dark-theme {
-            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            background: linear-gradient(45deg, #0f172a, #1e1b4b, #4c1d95, #1e1b4b);
+            background-size: 300% 300%;
+            animation: gradientMove 6s ease infinite;
             color: #e2e8f0;
         }
 
-        body.dark-theme .card {
+        body.dark-theme .card,
+        body.dark-theme .guestbook-card {
             background: #1e293b;
             color: #cbd5e1;
             box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3);
         }
 
-        body.dark-theme .card h3 {
+        body.dark-theme .card h3,
+        body.dark-theme .guestbook-card h3 {
             color: #f1f5f9;
         }
 
@@ -45,6 +56,18 @@
 
         body.dark-theme .tagline {
             color: #cbd5e1;
+        }
+
+        body.dark-theme .guestbook-form input,
+        body.dark-theme .guestbook-form textarea {
+            background: #0f172a;
+            color: #e2e8f0;
+            border-color: #475569;
+        }
+
+        body.dark-theme .guest-entry {
+            background: #0f172a;
+            border-left-color: #8b5cf6;
         }
 
         .container {
@@ -106,15 +129,84 @@
             font-weight: 500;
             margin-top: 1rem;
             transition: background 0.2s;
+            border: none;
+            cursor: pointer;
         }
 
         .btn:hover {
             background: #2563eb;
         }
 
-        /* Отступ между кнопками */
         .btn + .btn {
             margin-left: 1rem;
+        }
+
+        /* ГОСТЕВАЯ КНИГА */
+        .guestbook-card {
+            background: white;
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            margin: 2rem 0;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+        .guestbook-card h3 {
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+            color: #0f172a;
+        }
+        .guestbook-form input,
+        .guestbook-form textarea {
+            width: 100%;
+            padding: 0.8rem;
+            margin: 0.5rem 0;
+            border-radius: 1rem;
+            border: 1px solid #cbd5e1;
+            background: white;
+            font-family: inherit;
+            font-size: 1rem;
+            transition: 0.2s;
+        }
+        .guestbook-form input:focus,
+        .guestbook-form textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59,130,246,0.2);
+        }
+        .guestbook-actions {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-top: 0.5rem;
+        }
+        .guestbook-messages {
+            margin-top: 2rem;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .guest-entry {
+            background: #f8fafc;
+            border-radius: 1rem;
+            padding: 0.8rem 1rem;
+            margin: 0.8rem 0;
+            border-left: 4px solid #3b82f6;
+        }
+        .guest-entry strong {
+            color: #1e293b;
+        }
+        body.dark-theme .guest-entry strong {
+            color: #e2e8f0;
+        }
+        .guest-entry small {
+            font-size: 0.8rem;
+            color: #64748b;
+            display: block;
+            margin-top: 0.3rem;
+        }
+        .clear-btn {
+            background: #ef4444;
+        }
+        .clear-btn:hover {
+            background: #dc2626;
         }
 
         footer {
@@ -125,7 +217,6 @@
             color: #64748b;
         }
 
-        /* Кнопка переключения темы */
         .theme-toggle {
             position: fixed;
             bottom: 20px;
@@ -161,9 +252,8 @@
                 margin-left: 0;
                 margin-top: 0.5rem;
             }
-            .card .btn {
-                display: inline-block;
-                margin-right: 0.5rem;
+            .guestbook-card h3 {
+                font-size: 1.5rem;
             }
         }
     </style>
@@ -192,17 +282,32 @@
             </div>
         </div>
 
+        <!-- ГОСТЕВАЯ КНИГА (чистая, без записей) -->
+        <div class="guestbook-card">
+            <h3>📝 Гостевая книга</h3>
+            <div class="guestbook-form">
+                <input type="text" id="guestName" placeholder="Ваше имя" autocomplete="off">
+                <textarea id="guestMessage" rows="2" placeholder="Напишите что-нибудь..."></textarea>
+                <div class="guestbook-actions">
+                    <button id="postMessageBtn" class="btn" style="background:#8b5cf6;">📨 Оставить запись</button>
+                    <button id="clearMessagesBtn" class="btn clear-btn">🗑 Очистить всё</button>
+                </div>
+            </div>
+            <div class="guestbook-messages" id="guestMessages">
+                <!-- Здесь будут только реальные записи гостей, никаких приветственных сообщений -->
+            </div>
+        </div>
+
         <footer>
-            <p>Создано с ❤️ за 2 часа • 2026</p>
+            <p>Создано с ❤️ • 2026</p>
         </footer>
     </div>
 
-    <!-- Кнопка переключения тёмной/светлой темы -->
     <button class="theme-toggle" id="themeToggle">🌙 Тёмная тема</button>
 
     <script>
+        // === ТЁМНАЯ ТЕМА ===
         const toggleBtn = document.getElementById('themeToggle');
-        // Проверяем, была ли сохранена тема в localStorage
         if (localStorage.getItem('theme') === 'dark') {
             document.body.classList.add('dark-theme');
             toggleBtn.textContent = '☀️ Светлая тема';
@@ -217,6 +322,74 @@
                 localStorage.setItem('theme', 'light');
             }
         });
+
+        // === ГОСТЕВАЯ КНИГА (полностью очищена) ===
+        let messages = JSON.parse(localStorage.getItem('guestbook')) || [];
+        const messagesContainer = document.getElementById('guestMessages');
+        const guestName = document.getElementById('guestName');
+        const guestMessage = document.getElementById('guestMessage');
+        const postBtn = document.getElementById('postMessageBtn');
+        const clearBtn = document.getElementById('clearMessagesBtn');
+
+        function escapeHtml(str) {
+            return str.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
+
+        function renderMessages() {
+            messagesContainer.innerHTML = '';
+            if (messages.length === 0) {
+                // Пустое состояние — никаких записей, только текст
+                const emptyDiv = document.createElement('div');
+                emptyDiv.className = 'guest-entry';
+                emptyDiv.style.opacity = '0.7';
+                emptyDiv.innerHTML = '💬 Пока нет записей. Оставьте первый отзыв!';
+                messagesContainer.appendChild(emptyDiv);
+                return;
+            }
+            // Показываем последние сообщения сверху
+            messages.slice().reverse().forEach(msg => {
+                const div = document.createElement('div');
+                div.className = 'guest-entry';
+                div.innerHTML = `<strong>${escapeHtml(msg.name)}</strong>: ${escapeHtml(msg.message)} <small>${escapeHtml(msg.date)}</small>`;
+                messagesContainer.appendChild(div);
+            });
+        }
+
+        // Добавление новой записи
+        postBtn.addEventListener('click', () => {
+            const name = guestName.value.trim();
+            const message = guestMessage.value.trim();
+            if (!name || !message) {
+                alert('Пожалуйста, заполните имя и сообщение');
+                return;
+            }
+            const newMsg = {
+                name: name,
+                message: message,
+                date: new Date().toLocaleString('ru-RU')
+            };
+            messages.push(newMsg);
+            localStorage.setItem('guestbook', JSON.stringify(messages));
+            renderMessages();
+            guestName.value = '';
+            guestMessage.value = '';
+        });
+
+        // Очистка всех записей
+        clearBtn.addEventListener('click', () => {
+            if (confirm('Вы уверены, что хотите удалить все записи в гостевой книге?')) {
+                messages = [];
+                localStorage.removeItem('guestbook');
+                renderMessages();
+            }
+        });
+
+        renderMessages();
     </script>
 </body>
 </html>
