@@ -3,268 +3,148 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Мой первый сайт</title>
+    <title>Мой первый сайт | Общая гостевая книга</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%233b82f6' rx='20'/%3E%3Ctext x='50' y='68' font-size='60' text-anchor='middle' fill='white' font-weight='bold'%3EМ%3C/text%3E%3C/svg%3E">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot, orderBy, query, deleteDoc, doc, getDocs } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+        // 🔽🔽🔽 ВСТАВЬ СЮДА СВОЙ firebaseConfig (6 строк) 🔽🔽🔽
+        const firebaseConfig = {
+  	apiKey: "AIzaSyCmbVdMB2V0kji4XdC3kM38aJAsZR7BHjc",
+  	authDomain: "makar-guestbook.firebaseapp.com",
+  	projectId: "makar-guestbook",
+ 	storageBucket: "makar-guestbook.firebasestorage.app",
+ 	messagingSenderId: "825251277006",
+ 	appId: "1:825251277006:web:45997dbaeab24683a3089f"
+	};
+        // 🔼🔼🔼 КОНЕЦ ВСТАВКИ 🔼🔼🔼
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const messagesRef = collection(db, "messages");
+
+        const messagesContainer = document.getElementById('guestMessages');
+        const guestName = document.getElementById('guestName');
+        const guestMessage = document.getElementById('guestMessage');
+        const postBtn = document.getElementById('postMessageBtn');
+        const clearBtn = document.getElementById('clearMessagesBtn');
+
+        function escapeHtml(str) {
+            return str.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
         }
 
-        /* АНИМИРОВАННЫЙ ГРАДИЕНТ (светлая тема) - более заметный */
+        const q = query(messagesRef, orderBy("timestamp", "desc"));
+        onSnapshot(q, (snapshot) => {
+            messagesContainer.innerHTML = '';
+            if (snapshot.empty) {
+                const emptyDiv = document.createElement('div');
+                emptyDiv.className = 'guest-entry';
+                emptyDiv.innerHTML = '💬 Пока нет записей. Оставьте первый отзыв!';
+                messagesContainer.appendChild(emptyDiv);
+                return;
+            }
+            snapshot.forEach(docSnap => {
+                const data = docSnap.data();
+                const div = document.createElement('div');
+                div.className = 'guest-entry';
+                div.innerHTML = `<strong>${escapeHtml(data.name)}</strong>: ${escapeHtml(data.message)} <small>${data.date}</small>`;
+                messagesContainer.appendChild(div);
+            });
+        });
+
+        postBtn.addEventListener('click', async () => {
+            const name = guestName.value.trim();
+            const message = guestMessage.value.trim();
+            if (!name || !message) {
+                alert('Пожалуйста, заполните имя и сообщение');
+                return;
+            }
+            try {
+                await addDoc(messagesRef, {
+                    name: name,
+                    message: message,
+                    date: new Date().toLocaleString('ru-RU'),
+                    timestamp: new Date()
+                });
+                guestName.value = '';
+                guestMessage.value = '';
+            } catch (error) {
+                alert("Ошибка отправки. Проверьте интернет.");
+            }
+        });
+
+        clearBtn.addEventListener('click', async () => {
+            if (confirm('Удалить все сообщения?')) {
+                const snapshot = await getDocs(messagesRef);
+                snapshot.forEach(async (docSnap) => {
+                    await deleteDoc(doc(db, "messages", docSnap.id));
+                });
+                alert('Все сообщения удалены');
+            }
+        });
+    </script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(45deg, #f0f9ff, #e0f2fe, #bae6fd, #e0f2fe);
             background-size: 300% 300%;
-            color: #1e293b;
-            line-height: 1.5;
-            transition: background 0.3s, color 0.2s;
             animation: gradientMove 6s ease infinite;
+            color: #1e293b;
+            transition: background 0.3s;
         }
-
         @keyframes gradientMove {
             0% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
         }
-
-        /* Тёмная тема с ярким переливающимся градиентом */
         body.dark-theme {
             background: linear-gradient(45deg, #0f172a, #1e1b4b, #4c1d95, #1e1b4b);
             background-size: 300% 300%;
             animation: gradientMove 6s ease infinite;
             color: #e2e8f0;
         }
-
-        body.dark-theme .card,
-        body.dark-theme .guestbook-card {
-            background: #1e293b;
-            color: #cbd5e1;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3);
-        }
-
-        body.dark-theme .card h3,
-        body.dark-theme .guestbook-card h3 {
-            color: #f1f5f9;
-        }
-
-        body.dark-theme footer {
-            border-top-color: #334155;
-            color: #94a3b8;
-        }
-
-        body.dark-theme .tagline {
-            color: #cbd5e1;
-        }
-
-        body.dark-theme .guestbook-form input,
-        body.dark-theme .guestbook-form textarea {
-            background: #0f172a;
-            color: #e2e8f0;
-            border-color: #475569;
-        }
-
-        body.dark-theme .guest-entry {
-            background: #0f172a;
-            border-left-color: #8b5cf6;
-        }
-
-        .container {
-            max-width: 1100px;
-            margin: 0 auto;
-            padding: 2rem 1.5rem;
-        }
-
-        header {
-            text-align: center;
-            margin-bottom: 3rem;
-        }
-
-        h1 {
-            font-size: 2.5rem;
-            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-            background-clip: text;
-            -webkit-background-clip: text;
-            color: transparent;
-            margin-bottom: 1rem;
-        }
-
-        .tagline {
-            font-size: 1.2rem;
-            color: #475569;
-        }
-
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 2rem;
-            margin: 3rem 0;
-        }
-
-        .card {
-            background: white;
-            border-radius: 1.5rem;
-            padding: 1.5rem;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-            transition: transform 0.2s, background 0.3s;
-        }
-
-        .card:hover {
-            transform: translateY(-5px);
-        }
-
-        .card h3 {
-            margin-bottom: 0.75rem;
-            color: #0f172a;
-        }
-
-        .btn {
-            display: inline-block;
-            background: #3b82f6;
-            color: white;
-            text-decoration: none;
-            padding: 0.75rem 1.5rem;
-            border-radius: 2rem;
-            font-weight: 500;
-            margin-top: 1rem;
-            transition: background 0.2s;
-            border: none;
-            cursor: pointer;
-        }
-
-        .btn:hover {
-            background: #2563eb;
-        }
-
-        .btn + .btn {
-            margin-left: 1rem;
-        }
-
-        /* ГОСТЕВАЯ КНИГА */
-        .guestbook-card {
-            background: white;
-            border-radius: 1.5rem;
-            padding: 1.5rem;
-            margin: 2rem 0;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-        }
-        .guestbook-card h3 {
-            font-size: 1.8rem;
-            margin-bottom: 1rem;
-            color: #0f172a;
-        }
-        .guestbook-form input,
-        .guestbook-form textarea {
-            width: 100%;
-            padding: 0.8rem;
-            margin: 0.5rem 0;
-            border-radius: 1rem;
-            border: 1px solid #cbd5e1;
-            background: white;
-            font-family: inherit;
-            font-size: 1rem;
-            transition: 0.2s;
-        }
-        .guestbook-form input:focus,
-        .guestbook-form textarea:focus {
-            outline: none;
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 2px rgba(59,130,246,0.2);
-        }
-        .guestbook-actions {
-            display: flex;
-            gap: 1rem;
-            flex-wrap: wrap;
-            margin-top: 0.5rem;
-        }
-        .guestbook-messages {
-            margin-top: 2rem;
-            max-height: 400px;
-            overflow-y: auto;
-        }
-        .guest-entry {
-            background: #f8fafc;
-            border-radius: 1rem;
-            padding: 0.8rem 1rem;
-            margin: 0.8rem 0;
-            border-left: 4px solid #3b82f6;
-        }
-        .guest-entry strong {
-            color: #1e293b;
-        }
-        body.dark-theme .guest-entry strong {
-            color: #e2e8f0;
-        }
-        .guest-entry small {
-            font-size: 0.8rem;
-            color: #64748b;
-            display: block;
-            margin-top: 0.3rem;
-        }
-        .clear-btn {
-            background: #ef4444;
-        }
-        .clear-btn:hover {
-            background: #dc2626;
-        }
-
-        footer {
-            text-align: center;
-            margin-top: 4rem;
-            padding-top: 2rem;
-            border-top: 1px solid #e2e8f0;
-            color: #64748b;
-        }
-
-        .theme-toggle {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: #3b82f6;
-            color: white;
-            border: none;
-            border-radius: 2rem;
-            padding: 0.6rem 1.2rem;
-            font-size: 0.9rem;
-            font-weight: 500;
-            cursor: pointer;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-            transition: background 0.2s;
-            z-index: 100;
-        }
-
-        .theme-toggle:hover {
-            background: #2563eb;
-        }
-
-        body.dark-theme .theme-toggle {
-            background: #8b5cf6;
-        }
-
-        body.dark-theme .theme-toggle:hover {
-            background: #7c3aed;
-        }
-
-        @media (max-width: 640px) {
-            h1 { font-size: 1.8rem; }
-            .btn + .btn {
-                margin-left: 0;
-                margin-top: 0.5rem;
-            }
-            .guestbook-card h3 {
-                font-size: 1.5rem;
-            }
-        }
+        body.dark-theme .card, body.dark-theme .guestbook-card { background: #1e293b; color: #cbd5e1; }
+        body.dark-theme .card h3, body.dark-theme .guestbook-card h3 { color: #f1f5f9; }
+        body.dark-theme .guestbook-form input, body.dark-theme .guestbook-form textarea { background: #0f172a; color: #e2e8f0; border-color: #475569; }
+        body.dark-theme .guest-entry { background: #0f172a; border-left-color: #8b5cf6; }
+        .container { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem; }
+        header { text-align: center; margin-bottom: 3rem; }
+        h1 { font-size: 2.5rem; background: linear-gradient(135deg, #3b82f6, #8b5cf6); background-clip: text; -webkit-background-clip: text; color: transparent; }
+        .tagline { font-size: 1.2rem; color: #475569; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem; margin: 3rem 0; }
+        .card { background: white; border-radius: 1.5rem; padding: 1.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); transition: transform 0.2s; }
+        .card:hover { transform: translateY(-5px); }
+        .btn { display: inline-block; background: #3b82f6; color: white; text-decoration: none; padding: 0.75rem 1.5rem; border-radius: 2rem; font-weight: 500; margin-top: 1rem; transition: background 0.2s; border: none; cursor: pointer; }
+        .btn:hover { background: #2563eb; }
+        .btn + .btn { margin-left: 1rem; }
+        .guestbook-card { background: white; border-radius: 1.5rem; padding: 1.5rem; margin: 2rem 0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        .guestbook-card h3 { font-size: 1.8rem; margin-bottom: 1rem; }
+        .guestbook-form input, .guestbook-form textarea { width: 100%; padding: 0.8rem; margin: 0.5rem 0; border-radius: 1rem; border: 1px solid #cbd5e1; background: white; font-family: inherit; font-size: 1rem; }
+        .guestbook-actions { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 0.5rem; }
+        .guestbook-messages { margin-top: 2rem; max-height: 400px; overflow-y: auto; }
+        .guest-entry { background: #f8fafc; border-radius: 1rem; padding: 0.8rem 1rem; margin: 0.8rem 0; border-left: 4px solid #3b82f6; }
+        .guest-entry small { font-size: 0.8rem; color: #64748b; display: block; margin-top: 0.3rem; }
+        .clear-btn { background: #ef4444; }
+        .clear-btn:hover { background: #dc2626; }
+        footer { text-align: center; margin-top: 4rem; padding-top: 2rem; border-top: 1px solid #e2e8f0; color: #64748b; }
+        .theme-toggle { position: fixed; bottom: 20px; right: 20px; background: #3b82f6; color: white; border: none; border-radius: 2rem; padding: 0.6rem 1.2rem; cursor: pointer; z-index: 100; }
+        body.dark-theme .theme-toggle { background: #8b5cf6; }
+        @media (max-width: 640px) { h1 { font-size: 1.8rem; } .btn + .btn { margin-left: 0; margin-top: 0.5rem; } }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>Привет всем!</h1>
-            <p class="tagline">Это мой первый сайт, созданный с помощью языка программирования HTML и CSS!</p>
+            <h1>Привет, семья!</h1>
+            <p class="tagline">Это мой первый сайт, созданный с помощью знаний в программировании!</p>
         </header>
-
         <div class="grid">
             <div class="card">
                 <h3>📌 О себе</h3>
@@ -281,8 +161,6 @@
                 <a href="tel:+79779497386" class="btn" style="background:#22c55e;">Позвонить</a>
             </div>
         </div>
-
-        <!-- ГОСТЕВАЯ КНИГА (чистая, без записей) -->
         <div class="guestbook-card">
             <h3>📝 Гостевая книга</h3>
             <div class="guestbook-form">
@@ -293,20 +171,14 @@
                     <button id="clearMessagesBtn" class="btn clear-btn">🗑 Очистить всё</button>
                 </div>
             </div>
-            <div class="guestbook-messages" id="guestMessages">
-                <!-- Здесь будут только реальные записи гостей, никаких приветственных сообщений -->
-            </div>
+            <div class="guestbook-messages" id="guestMessages"></div>
         </div>
-
         <footer>
-            <p>Создано с ❤️ • 2026</p>
+            <p>Создано с ❤️ • Общая гостевая книга на Firebase • 2026</p>
         </footer>
     </div>
-
     <button class="theme-toggle" id="themeToggle">🌙 Тёмная тема</button>
-
     <script>
-        // === ТЁМНАЯ ТЕМА ===
         const toggleBtn = document.getElementById('themeToggle');
         if (localStorage.getItem('theme') === 'dark') {
             document.body.classList.add('dark-theme');
@@ -322,74 +194,6 @@
                 localStorage.setItem('theme', 'light');
             }
         });
-
-        // === ГОСТЕВАЯ КНИГА (полностью очищена) ===
-        let messages = JSON.parse(localStorage.getItem('guestbook')) || [];
-        const messagesContainer = document.getElementById('guestMessages');
-        const guestName = document.getElementById('guestName');
-        const guestMessage = document.getElementById('guestMessage');
-        const postBtn = document.getElementById('postMessageBtn');
-        const clearBtn = document.getElementById('clearMessagesBtn');
-
-        function escapeHtml(str) {
-            return str.replace(/[&<>]/g, function(m) {
-                if (m === '&') return '&amp;';
-                if (m === '<') return '&lt;';
-                if (m === '>') return '&gt;';
-                return m;
-            });
-        }
-
-        function renderMessages() {
-            messagesContainer.innerHTML = '';
-            if (messages.length === 0) {
-                // Пустое состояние — никаких записей, только текст
-                const emptyDiv = document.createElement('div');
-                emptyDiv.className = 'guest-entry';
-                emptyDiv.style.opacity = '0.7';
-                emptyDiv.innerHTML = '💬 Пока нет записей. Оставьте первый отзыв!';
-                messagesContainer.appendChild(emptyDiv);
-                return;
-            }
-            // Показываем последние сообщения сверху
-            messages.slice().reverse().forEach(msg => {
-                const div = document.createElement('div');
-                div.className = 'guest-entry';
-                div.innerHTML = `<strong>${escapeHtml(msg.name)}</strong>: ${escapeHtml(msg.message)} <small>${escapeHtml(msg.date)}</small>`;
-                messagesContainer.appendChild(div);
-            });
-        }
-
-        // Добавление новой записи
-        postBtn.addEventListener('click', () => {
-            const name = guestName.value.trim();
-            const message = guestMessage.value.trim();
-            if (!name || !message) {
-                alert('Пожалуйста, заполните имя и сообщение');
-                return;
-            }
-            const newMsg = {
-                name: name,
-                message: message,
-                date: new Date().toLocaleString('ru-RU')
-            };
-            messages.push(newMsg);
-            localStorage.setItem('guestbook', JSON.stringify(messages));
-            renderMessages();
-            guestName.value = '';
-            guestMessage.value = '';
-        });
-
-        // Очистка всех записей
-        clearBtn.addEventListener('click', () => {
-            if (confirm('Вы уверены, что хотите удалить все записи в гостевой книге?')) {
-                messages = [];
-                localStorage.removeItem('guestbook');
-                renderMessages();
-            }
-        });
-
-        renderMessages();
     </script>
 </body>
 </html>
